@@ -1,0 +1,147 @@
+/// Thin HTTP client wrapping `package:http`.
+///
+/// - Attaches `Authorization: Bearer <token>` when a token is available.
+/// - Handles token refresh on 401 (best effort; Phase 1 simply logs out).
+/// - Parses the backend error envelope into typed exceptions.
+/// - Never exposes raw backend stack traces.
+library;
+
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import 'api_exception.dart';
+
+typedef JsonMap = Map<String, dynamic>;
+
+class ApiClient {
+  ApiClient({required this.baseUrl, http.Client? httpClient})
+      : _http = httpClient ?? http.Client();
+
+  final String baseUrl;
+  final http.Client _http;
+
+  String? _accessToken;
+  String? _refreshToken;
+
+  void setTokens({String? access, String? refresh}) {
+    _accessToken = access;
+    _refreshToken = refresh;
+  }
+
+  void clearTokens() {
+    _accessToken = null;
+    _refreshToken = null;
+  }
+
+  Uri _uri(String path) {
+    final p = path.startsWith('/') ? path : '/$path';
+    return Uri.parse('$baseUrl$p');
+  }
+
+  Map<String, String> _headers({bool json = true}) {
+    final headers = <String, String>{
+      if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+    };
+    if (json) headers['Content-Type'] = 'application/json';
+    return headers;
+  }
+
+  /// Perform a GET request.
+  Future<dynamic> get(String path, {Map<String, dynamic>? query}) async {
+    var uri = _uri(path);
+    if (query != null && query.isNotEmpty) {
+      uri = uri.replace(queryParameters: query.map((k, v) => MapEntry(k, '$v')));
+    }
+    return _send(() => _http.get(uri, headers: _headers()));
+  }
+
+  Future<dynamic> post(String path, {Object? body}) => _send(
+        () => _http.post(_uri(path), headers: _headers(), body: body == null ? null : jsonEncode(body)),
+      );
+
+  Future<dynamic> put(String path, {Object? body}) => _send(
+        () => _http.put(_uri(path), headers: _headers(), body: body == null ? null : jsonEncode(body)),
+      );
+
+  Future<dynamic> delete(String path) => _send(() => _http.delete(_uri(path), headers: _headers()));
+
+  Future<dynamic> patch(String path, {Object? body}) => _send(
+        () => _http.patch(_uri(path), headers: _headers(), body: body == null ? null : jsonEncode(body)),
+      );
+
+  Future<dynamic> _send(Future<http.Response> Function() request) async {
+    http.Response response;
+    try {
+      response = await request();
+    } on TimeoutException {
+      throw const ApiException(message: 'The request timed out. Please try again.');
+    } catch (_) {
+      throw const NetworkException('No internet connection. Please try again.');
+    }
+
+    if (response.statusCode == 401 && _refreshToken != null) {
+      // Best effort refresh; if it fails the caller re-auths.
+      final refreshed = await _tryRefresh();
+      if (refreshed) {
+        try {
+          response = await request();
+        } catch (_) {
+          throw const NetworkException('No internet connection. Please try again.');
+        }
+      }
+    }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) return null;
+      return jsonDecode(response.body);
+    }
+
+    throw _mapError(response);
+  }
+
+  bool _refreshing = false;
+  Future<bool> _tryRefresh() async {
+    if (_refreshing || _refreshToken == null) return false;
+    _refreshing = true;
+    try {
+      final uri = Uri.parse('$baseUrl/api/v1/auth/refresh')
+          .replace(queryParameters: {'refresh_token': _refreshToken!});
+      final res = await _http.get(uri, headers: _headers());
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body) as JsonMap;
+        setTokens(access: body['access_token'] as String?, refresh: body['refresh_token'] as String?);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  ApiException _mapError(http.Response response) {
+    String code = '';
+    String message = 'Something went wrong. Please try again.';
+    Map<String, dynamic>? details;
+    try {
+      final body = jsonDecode(response.body) as JsonMap;
+      final err = body['error'] as JsonMap?;
+      code = err?['code'] as String? ?? '';
+      message = err?['message'] as String? ?? message;
+      details = err?['details'] as Map<String, dynamic>?;
+    } catch (_) {
+      // Non-JSON error page - keep the generic safe message.
+    }
+
+    if (response.statusCode == 401) {
+      return UnauthorizedException(message);
+    }
+    if (response.statusCode >= 500) {
+      return ServerException(message);
+    }
+    return RequestFailedException(message, code: code, statusCode: response.statusCode, details: details);
+  }
+}

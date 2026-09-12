@@ -1,0 +1,23 @@
+# AarogyaDrishti API - runtime dependencies (Phases 1-6)
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0.30
+alembic>=1.13
+psycopg[binary]>=3.2          # PostgreSQL driver (psycopg 3)
+pydantic>=2.7
+pydantic-settings>=2.3
+email-validator>=2.1
+python-dotenv>=1.0
+PyJWT>=2.8
+bcrypt>=4.1
+
+# Phase 2 - analytics
+pandas>=2.2
+numpy>=1.26
+scipy>=1.12
+xgboost>=2.0                 # optional: personal wellbeing model (falls back to sklearn-free path)
+# scikit-learn and shap are OPTIONAL and only used inside guarded imports
+# (the App Control policy on this machine blocks their DLLs at import time).
+
+# Phase 6 - AI coach (httpx ships with fastapi ecosystem, pinned explicitly)
+httpx>=0.27
