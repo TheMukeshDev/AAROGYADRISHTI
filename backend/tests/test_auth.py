@@ -2,11 +2,35 @@
 
 from __future__ import annotations
 
+import json
+
 
 def test_healthcheck(client):
     resp = client.get("/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
+
+
+def test_database_failure_returns_safe_envelope(client, monkeypatch):
+    from sqlalchemy.exc import OperationalError
+
+    from app.database import session as db_session_module
+
+    class BrokenSessionLocal:
+        def __init__(self, *args, **kwargs):
+            raise OperationalError("BEGIN", {}, Exception("underlying driver error"))
+
+    monkeypatch.setattr(db_session_module, "SessionLocal", BrokenSessionLocal)
+
+    resp = client.post(
+        "/api/v1/auth/register",
+        json={"name": "A", "email": "dbdown@example.com", "password": "H3althy!Life"},
+    )
+    assert resp.status_code == 503
+    body = resp.json()
+    assert body["error"]["code"] == "service_unavailable"
+    # No driver internals / connection string details are exposed to clients.
+    assert "underlying driver error" not in json.dumps(body)
 
 
 def test_register_and_login(client):

@@ -39,6 +39,17 @@ docker run --name aarogya-db -e POSTGRES_USER=aarogya -e POSTGRES_PASSWORD=aarog
   -e POSTGRES_DB=aarogyadrishti -p 5432:5432 -d postgres:16-alpine
 ```
 
+For Supabase, always use the **pooled (Supavisor)** connection string, which is
+IPv4-reachable. The direct `db.<project-ref>.supabase.co` endpoint is IPv6-only
+and does not work from Vercel functions:
+
+```text
+postgresql+psycopg://<DB_USER>.<PROJECT_REF>:<DB_PASSWORD>@aws-0-<REGION>.pooler.supabase.com:5432/<DB_NAME>
+```
+
+Port `5432` is session mode; port `6543` is transaction mode (recommended for
+serverless). See [docs/VERCEL.md](docs/VERCEL.md) for full configuration.
+
 Initialize and run the API:
 
 ```powershell
@@ -116,11 +127,14 @@ Quick start:
 2. Set the Vercel **Root Directory** to `backend`.
 3. Select the **Other** framework preset. Leave build and output commands empty.
 4. Add production environment variables: `ENVIRONMENT=production`,
-  `DEBUG=false`, `DATABASE_URL`, `JWT_SECRET`, `ALLOW_DEMO_DATA=false`,
+  `DEBUG=false`, `DATABASE_URL` (the Supabase pooler URL, see above),
+  `JWT_SECRET`, `ALLOW_DEMO_DATA=false`,
   `RATE_LIMIT_ENABLED=true`, `AUTH_PROVIDER=firebase`, `FIREBASE_PROJECT_ID`,
   and the separate `FIREBASE_*` service-account fields.
-5. Run Alembic migrations against the managed PostgreSQL database.
-6. Verify `https://<your-project>.vercel.app/health`.
+5. Run Alembic migrations against the managed PostgreSQL database:
+  `python -m alembic upgrade head` (run from `backend`).
+6. Verify `https://<your-project>.vercel.app/health` and
+  `https://<your-project>.vercel.app/health/db`.
 
 Read the complete [Vercel deployment guide](docs/VERCEL.md) for dashboard
 settings, secrets, migrations, custom domains, CLI deployment, mobile release

@@ -3,6 +3,41 @@
 from __future__ import annotations
 
 
+def test_liveness_healthcheck(client):
+    resp = client.get("/health")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
+
+
+def test_liveness_healthcheck_api_alias(client):
+    resp = client.get("/api/v1/health")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
+
+
+def test_db_healthcheck(client):
+    resp = client.get("/health/db")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok"}
+
+
+def test_db_healthcheck_api_alias(client):
+    resp = client.get("/api/v1/health/db")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok"}
+
+
+def test_db_healthcheck_database_down(client, monkeypatch):
+    import app.main as main_module
+
+    monkeypatch.setattr(main_module, "db_is_reachable", lambda db: False)
+    resp = client.get("/health/db")
+    assert resp.status_code == 503
+    body = resp.json()
+    assert body["error"]["code"] == "service_unavailable"
+    assert "detail" not in body  # no driver/connection internals leak
+
+
 def test_health_initially_unconnected(client, auth_headers):
     headers = auth_headers("hc-empty@example.com")
     resp = client.get("/api/v1/health/status", headers=headers)

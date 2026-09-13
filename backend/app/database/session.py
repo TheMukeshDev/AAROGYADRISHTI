@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Generator
 
-from sqlalchemy import Engine, StaticPool, create_engine, event
+from sqlalchemy import Engine, StaticPool, create_engine, event, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
+from app.core.logging import get_logger
 
 _settings = get_settings()
 
@@ -46,3 +48,17 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def db_is_reachable(db: Session) -> bool:
+    """Return True when a trivial read succeeds.
+
+    Used by the database health check. Only the exception type is logged so
+    driver details and connection strings never reach the logs.
+    """
+    try:
+        db.execute(text("SELECT 1"))
+    except SQLAlchemyError as exc:
+        get_logger(__name__).warning("Database reachability check failed: %s", type(exc).__name__)
+        return False
+    return True
