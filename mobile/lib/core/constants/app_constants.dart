@@ -5,7 +5,7 @@
 ///
 /// ```sh
 /// flutter run \
-///   --dart-define=API_BASE_URL=https://api.aarogyadrishti.in \
+///   --dart-define=API_BASE_URL=https://aarogyadrishti.vercel.app \
 ///   --dart-define=ENVIRONMENT=production
 /// ```
 class AppConstants {
@@ -15,10 +15,10 @@ class AppConstants {
   static const String tagline = 'See Your Habits. Shape Your Health.';
   static const String phase = 'Phase 6';
 
-  /// Base URL of the FastAPI backend. Default targets the local dev server.
+  /// Origin of the FastAPI backend. Override this for local development.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: 'https://aarogyadrishti.vercel.app',
   );
 
   static const String apiV1Prefix = String.fromEnvironment(

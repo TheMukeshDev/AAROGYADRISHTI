@@ -11,13 +11,15 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../constants/app_constants.dart';
 import 'api_exception.dart';
 
 typedef JsonMap = Map<String, dynamic>;
 
 class ApiClient {
-  ApiClient({required this.baseUrl, http.Client? httpClient})
-      : _http = httpClient ?? http.Client();
+  ApiClient({required String baseUrl, http.Client? httpClient})
+      : baseUrl = baseUrl.replaceFirst(RegExp(r'/+$'), ''),
+        _http = httpClient ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
@@ -107,7 +109,7 @@ class ApiClient {
     if (_refreshing || _refreshToken == null) return false;
     _refreshing = true;
     try {
-      final uri = Uri.parse('$baseUrl/api/v1/auth/refresh');
+      final uri = _uri('${AppConstants.apiV1Prefix}/auth/refresh');
       // The refresh token travels in the JSON body, never in the URL query -
       // URLs leak into logs and history, and a refresh token renews the whole
       // session.

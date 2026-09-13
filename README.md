@@ -67,11 +67,11 @@ flutter pub get
 flutter run
 ```
 
-The Android emulator uses `http://10.0.2.2:8000` by default. Override the API
-for a physical device or a deployed backend:
+The app uses `https://aarogyadrishti.vercel.app` by default. For local
+development, override the API with the Android emulator host address:
 
 ```powershell
-flutter run --dart-define=API_BASE_URL=https://api.example.com
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 ```
 
 Build and test the mobile app with:
