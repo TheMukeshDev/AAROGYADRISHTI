@@ -232,7 +232,78 @@ flutter test
 
 ---
 
-## 4. Environment variables (backend)
+## 4. Deploy the backend to Vercel
+
+Vercel hosts the FastAPI backend as a Python serverless function. The Flutter
+application remains a mobile client and is released separately. The Vercel
+project must use `backend/` as its **Root Directory**; that directory contains
+`vercel.json`, `api/index.py`, and the backend `requirements.txt`.
+
+### 4.1 Create the Vercel project
+
+1. Push this repository to GitHub and import it into Vercel.
+2. In **Project Settings > General**, set **Root Directory** to `backend`.
+3. Leave the framework preset as **Other**. No build command or output
+  directory is required.
+4. Add the production environment variables below in **Settings > Environment
+  Variables**. Add them for **Production** (and Preview if you use preview
+  deployments).
+
+Required production values:
+
+```dotenv
+ENVIRONMENT=production
+DEBUG=false
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE
+JWT_SECRET=<output of: python -c "import secrets; print(secrets.token_urlsafe(64))">
+ALLOW_DEMO_DATA=false
+CORS_ORIGINS=https://your-mobile-web-origin.example
+RATE_LIMIT_ENABLED=true
+```
+
+Use a managed PostgreSQL database that accepts connections from Vercel. Do not
+use SQLite for this deployment: serverless instances are ephemeral and cannot
+provide reliable persistent storage. Keep `AI_PROVIDER=deterministic` unless a
+remote provider is configured with `AI_API_KEY`, `AI_BASE_URL`, and `AI_MODEL`.
+
+### 4.2 Run database migrations
+
+Run migrations against the production database before sending mobile traffic.
+From a local checkout with the production `DATABASE_URL` supplied securely:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+Do not commit the production connection string. Vercel deployments do not run
+Alembic automatically, so repeat this command whenever a new migration is
+released.
+
+### 4.3 Verify the deployment
+
+After the first deployment, check the liveness endpoint:
+
+```text
+https://<your-vercel-domain>/health
+```
+
+It should return `{"status":"ok",...}`. With `DEBUG=false`, `/docs` and
+`/redoc` intentionally return 404. Point the mobile release build at the
+deployed API (without a trailing slash):
+
+```powershell
+cd mobile
+flutter build apk --release --dart-define=API_BASE_URL=https://<your-vercel-domain>
+```
+
+Vercel preview URLs are not suitable for a production mobile build. Use a
+stable custom domain for the API and add that domain to `CORS_ORIGINS` when a
+browser-based client is introduced.
+
+---
+
+## 5. Environment variables (backend)
 
 | Variable                            | Default                    | Description |
 |-------------------------------------|----------------------------|-------------|
@@ -309,7 +380,7 @@ GET  /coach/next-action      GET /coach/weekly-summary
 
 ---
 
-## 6. Security quick-reference
+## 7. Security quick-reference
 
 Hardening is documented in [SECURITY.md](SECURITY.md). The short version:
 
@@ -329,7 +400,7 @@ Hardening is documented in [SECURITY.md](SECURITY.md). The short version:
 
 ---
 
-## 7. Data-quality invariants
+## 8. Data-quality invariants
 
 - Unknown values are stored as **NULL**, never fabricated as zero.
 - Health Connect values are blended into the user's existing day row.
@@ -342,7 +413,7 @@ Hardening is documented in [SECURITY.md](SECURITY.md). The short version:
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
@@ -356,7 +427,7 @@ Hardening is documented in [SECURITY.md](SECURITY.md). The short version:
 
 ---
 
-## 9. Phase status
+## 10. Phase status
 
 | Phase | Area | Status |
 |-------|------|--------|
