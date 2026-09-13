@@ -36,7 +36,7 @@ void main() {
         ),
       ),
     );
-    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsOneWidget);
     expect(find.text('Selected'), findsOneWidget);
   });
 

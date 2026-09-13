@@ -1,4 +1,4 @@
-/// Onboarding goal selection screen.
+/// Onboarding goal selection screen (multi-select).
 library;
 
 import 'package:flutter/material.dart';
@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_strings.dart';
 import '../../models/app_enums.dart';
-import '../../widgets/checkin_option.dart';
+import '../../widgets/selection_card.dart';
 import 'onboarding_controller.dart';
 
 class GoalScreen extends StatelessWidget {
@@ -22,32 +22,48 @@ class GoalScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             AppStrings.goalTitle,
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, height: 1.2),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             AppStrings.goalSubtitle,
-            style: TextStyle(fontSize: 15, color: scheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 14.5, height: 1.5, color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 150),
+            child: controller.goals.isEmpty
+                ? Text(
+                    'Select at least one area to continue.',
+                    key: const ValueKey('hint'),
+                    style: TextStyle(fontSize: 13, color: scheme.error),
+                  )
+                : Text(
+                    '${controller.goals.length} selected',
+                    key: const ValueKey('count'),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: scheme.primary),
+                  ),
+          ),
+          const SizedBox(height: 12),
           Expanded(
             child: ListView.separated(
               itemCount: PrimaryGoal.values.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, i) {
                 final goal = PrimaryGoal.values[i];
-                return CheckinOption(
+                return SelectionCard(
                   label: goal.label,
                   icon: goal.icon,
-                  selected: controller.goal == goal,
-                  onTap: () => controller.setGoal(goal),
+                  selected: controller.goals.contains(goal),
+                  onTap: () => controller.toggleGoal(goal),
                 );
               },
             ),
           ),
+          const SizedBox(height: 12),
         ],
       ),
     );

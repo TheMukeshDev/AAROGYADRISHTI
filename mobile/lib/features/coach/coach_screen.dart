@@ -15,7 +15,10 @@ import '../../repositories/coach_repository.dart';
 import 'chat_screen.dart';
 
 class CoachScreen extends StatefulWidget {
-  const CoachScreen({super.key});
+  const CoachScreen({super.key, this.onNavigateTab});
+
+  /// Switches the root tab (e.g. Experiments -> tab 3, Insights -> tab 1).
+  final ValueChanged<int>? onNavigateTab;
 
   @override
   State<CoachScreen> createState() => _CoachScreenState();
@@ -74,7 +77,6 @@ class _CoachScreenState extends State<CoachScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lifestyle Coach'),
@@ -105,24 +107,11 @@ class _CoachScreenState extends State<CoachScreen> {
                   ),
                 )
               : _conversations.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.psychology_alt_outlined, size: 48, color: scheme.primary),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Chat about your lifestyle patterns to see honest, data-backed observations.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: scheme.onSurfaceVariant),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'I am a lifestyle coach, not a doctor.',
-                            style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant.withValues(alpha: 0.7)),
-                          ),
-                        ],
-                      ),
+                  ? _EmptyCoach(
+                      onTryExperiment: widget.onNavigateTab == null ? null : () => widget.onNavigateTab!(3),
+                      onViewInsights: widget.onNavigateTab == null ? null : () => widget.onNavigateTab!(1),
+                      onNewChat: _newChat,
+                      creating: _creating,
                     )
                   : RefreshIndicator(
                       onRefresh: _load,
@@ -143,6 +132,105 @@ class _CoachScreenState extends State<CoachScreen> {
                         },
                       ),
                     ),
+    );
+  }
+}
+
+class _EmptyCoach extends StatelessWidget {
+  const _EmptyCoach({
+    required this.onTryExperiment,
+    required this.onViewInsights,
+    required this.onNewChat,
+    required this.creating,
+  });
+
+  final VoidCallback? onTryExperiment;
+  final VoidCallback? onViewInsights;
+  final VoidCallback onNewChat;
+  final bool creating;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.psychology_alt_outlined, size: 36, color: scheme.primary),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your coach is ready when you are',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Chat about your lifestyle patterns to see honest, data-backed observations.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, height: 1.45, color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 20),
+            if (onTryExperiment != null) ...[
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onTryExperiment,
+                  icon: const Icon(Icons.science_outlined),
+                  label: Text(AppStrings.tryExperiment),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onViewInsights,
+                  icon: const Icon(Icons.insights_outlined),
+                  label: Text(AppStrings.viewInsights),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: scheme.outlineVariant, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.shield_outlined, size: 18, color: scheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      AppStrings.coachSafetyNote,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.45,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Tap New chat to get started',
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant.withValues(alpha: 0.8)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

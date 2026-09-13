@@ -98,7 +98,7 @@ API's credentialed CORS configuration.
 
 1. Create or open a project in the [Firebase Console](https://console.firebase.google.com/).
 2. Enable **Authentication > Sign-in method > Google**.
-3. Add an Android app with package name `com.aarogyadrishti.app`.
+3. Add an Android app with package name `com.themukeshdev`.
 4. Add the SHA-1 and SHA-256 fingerprints for the debug and release signing
   keys, then download `google-services.json` into
   `mobile/android/app/google-services.json`.
@@ -176,7 +176,7 @@ from `backend`, so it automatically uses the correct root and `vercel.json`.
   that `ENVIRONMENT=production` has `DEBUG=false`, `ALLOW_DEMO_DATA=false`,
   `AUTH_PROVIDER=firebase`, and valid Firebase credentials.
 - **Google sign-in fails on Android:** verify `google-services.json` matches
-  `com.aarogyadrishti.app` and that the signing-key SHA fingerprints are added
+  `com.themukeshdev` and that the signing-key SHA fingerprints are added
   in Firebase.
 - **Firebase token exchange fails:** verify `FIREBASE_PROJECT_ID` matches the
   Firebase project and that all Firebase service-account fields are present.

@@ -7,6 +7,8 @@ import 'app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await GoogleSignIn.instance.initialize();
+  await GoogleSignIn.instance.initialize(
+    serverClientId: '601323736761-0vu3uk6gkgoq4j5ldicsuojb014fcapk.apps.googleusercontent.com',
+  );
   runApp(const AarogyaDrishtiApp());
 }

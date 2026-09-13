@@ -61,5 +61,5 @@ emails in Firebase Console and upload the signed APK from the release build.
 - `API_BASE_URL` points to that domain without a trailing slash.
 - The release APK/AAB is signed with the release keystore.
 - The release keystore SHA fingerprints are registered in Firebase.
-- `google-services.json` matches package `com.aarogyadrishti.app`.
+- `google-services.json` matches package `com.themukeshdev`.
 - Production Vercel variables and database migrations are complete.

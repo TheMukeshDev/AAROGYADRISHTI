@@ -1,4 +1,6 @@
 /// Splash screen - premium brand moment while the session is restored.
+///
+/// Centered brand mark + wordmark + tagline with a calm, minimal entrance.
 library;
 
 import 'dart:async';
@@ -7,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_strings.dart';
+import '../../widgets/app_logo.dart';
 import '../root_gate.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -16,23 +19,30 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  late final Animation<double> _fade;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _scale = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
     _navigate();
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 650));
+    await Future.delayed(const Duration(milliseconds: 1300));
     if (!mounted) return;
-    _goTo(const RootGate());
-  }
-
-  void _goTo(Widget screen) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => screen,
+        pageBuilder: (_, __, ___) => const RootGate(),
         transitionsBuilder: (_, animation, __, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 350),
@@ -41,61 +51,64 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
         width: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [scheme.primary, scheme.primaryContainer],
+            colors: [Color(0xFF0E6E5D), Color(0xFF0B5A4E)],
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.84, end: 1),
-              duration: const Duration(milliseconds: 550),
-              curve: Curves.easeOutBack,
-              builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
-              child: Image.asset(
-                'assets/images/AarogyaDrishti.png',
-                width: 180,
-                height: 180,
-                fit: BoxFit.contain,
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FadeTransition(
+                opacity: _fade,
+                child: ScaleTransition(
+                  scale: _scale,
+                  child: LogoMark(size: 116, backgroundColor: Colors.white.withValues(alpha: 0.12)),
+                ),
               ),
-            ),
-            const SizedBox(height: 28),
-            Text(
-              AppConstants.appName,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 34,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
+              const SizedBox(height: 26),
+              FadeTransition(
+                opacity: _fade,
+                child: const Text(
+                  AppConstants.appName,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              AppStrings.tagline,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+              const SizedBox(height: 10),
+              FadeTransition(
+                opacity: _fade,
+                child: Text(
+                  AppStrings.tagline,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.6,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 40),
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

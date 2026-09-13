@@ -29,17 +29,32 @@ void main() {
     });
   });
 
-  group('profile state', () {
-    test('setGoal + setProfile drive profileValid', () {
+  group('goals (multi-select)', () {
+    test('toggleGoal adds and removes while keeping other selections', () {
       final c = OnboardingController();
-      expect(c.profileValid, isFalse);
-      c.setGoal(PrimaryGoal.betterSleep);
-      expect(c.profileValid, isFalse);
-      c.setProfile(ageGroup: '25_34', activityLevel: ActivityLevel.lightlyActive, gender: 'male');
-      expect(c.profileValid, isTrue);
-      expect(c.ageGroup, '25_34');
-      expect(c.gender, 'male');
-      expect(c.activityLevel, ActivityLevel.lightlyActive);
+      expect(c.goalsSelected, isFalse);
+
+      c.toggleGoal(PrimaryGoal.betterSleep);
+      c.toggleGoal(PrimaryGoal.hydration);
+      expect(c.goals.length, 2);
+      expect(c.goalsSelected, isTrue);
+
+      // Deselect one goal; the other must remain selected.
+      c.toggleGoal(PrimaryGoal.betterSleep);
+      expect(c.goals, [PrimaryGoal.hydration]);
+      expect(c.goalsSelected, isTrue);
+
+      // Deselect the last goal -> nothing selected, continue disabled.
+      c.toggleGoal(PrimaryGoal.hydration);
+      expect(c.goals, isEmpty);
+      expect(c.goalsSelected, isFalse);
+    });
+
+    test('setGoals replaces the full selection and can be empty', () {
+      final c = OnboardingController()..setGoals([PrimaryGoal.betterSleep, PrimaryGoal.moreEnergy]);
+      expect(c.goals.length, 2);
+      c.setGoals([]);
+      expect(c.goalsSelected, isFalse);
     });
   });
 

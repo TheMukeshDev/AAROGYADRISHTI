@@ -7,6 +7,7 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -98,11 +99,41 @@ class AuthProvider extends ChangeNotifier {
       }
       final session = await _repository.loginWithFirebase(firebaseIdToken);
       await _applySession(session);
+    } on GoogleSignInException catch (e) {
+      _lastError = _googleSignInMessage(e);
+      rethrow;
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      _lastError = 'Google sign-in failed (${e.code}). Please try again.';
+      rethrow;
+    } on PlatformException catch (e) {
+      _lastError = 'Google sign-in failed (${e.code}). Please try again.';
+      rethrow;
     } catch (e) {
       _lastError = _friendly(e);
       rethrow;
     }
     return null;
+  }
+
+  String _googleSignInMessage(GoogleSignInException e) {
+    return switch (e.code) {
+      GoogleSignInExceptionCode.canceled ||
+      GoogleSignInExceptionCode.interrupted =>
+        'Google sign-in was cancelled.',
+      GoogleSignInExceptionCode.clientConfigurationError =>
+        'Google sign-in isn\'t configured. Add this app\'s SHA-1 fingerprint '
+            'in Firebase Console, then try again.',
+      GoogleSignInExceptionCode.providerConfigurationError =>
+        'Google sign-in isn\'t available on this device yet. Try again later.',
+      GoogleSignInExceptionCode.uiUnavailable =>
+        'Google sign-in is unavailable right now. Please try again.',
+      GoogleSignInExceptionCode.userMismatch =>
+        'A different Google account is already signed in. Sign out and try again.',
+      GoogleSignInExceptionCode.unknownError =>
+        (e.description?.isNotEmpty ?? false)
+            ? e.description!
+            : 'Google sign-in failed. Please try again.',
+    };
   }
 
   Future<Null> loginWithDemo() async {

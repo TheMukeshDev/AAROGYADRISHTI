@@ -12,7 +12,8 @@ enum PrimaryGoal {
   physicalActivity('physical_activity', 'Physical Activity', Icons.directions_run),
   stressManagement('stress_management', 'Stress Management', Icons.self_improvement),
   healthyEating('healthy_eating', 'Healthy Eating', Icons.restaurant),
-  overallLifestyle('overall_lifestyle', 'Overall Lifestyle', Icons.spa);
+  hydration('hydration', 'Hydration', Icons.water_drop_outlined),
+  overallLifestyle('overall_lifestyle', 'Overall Lifestyle', Icons.spa_outlined);
 
   const PrimaryGoal(this.wire, this.label, this.icon);
   final String wire;
