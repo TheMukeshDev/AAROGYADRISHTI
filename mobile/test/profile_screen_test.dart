@@ -5,9 +5,9 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile/features/onboarding/onboarding_controller.dart';
-import 'package:mobile/features/onboarding/profile_screen.dart';
-import 'package:mobile/models/app_enums.dart';
+import 'package:aarogyadrishti/features/onboarding/onboarding_controller.dart';
+import 'package:aarogyadrishti/features/onboarding/profile_screen.dart';
+import 'package:aarogyadrishti/models/app_enums.dart';
 
 Widget wrap(OnboardingController c) => MaterialApp(
       home: Scaffold(

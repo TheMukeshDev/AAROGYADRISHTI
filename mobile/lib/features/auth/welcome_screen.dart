@@ -36,14 +36,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: scheme.primary),
               ),
               const Spacer(),
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(24),
+              Hero(
+                tag: 'aarogya-logo',
+                child: Image.asset(
+                  'assets/images/AarogyaDrishti.png',
+                  width: 128,
+                  height: 128,
+                  fit: BoxFit.contain,
                 ),
-                child: Icon(Icons.filter_center_focus, size: 44, color: scheme.primary),
               ),
               const SizedBox(height: 28),
               Text(

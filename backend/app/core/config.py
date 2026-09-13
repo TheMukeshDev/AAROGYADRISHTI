@@ -9,10 +9,14 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AuthProviderName = Literal["jwt", "firebase"]
+
+# The default value is publicly known (it is committed in this repository), so
+# it must NEVER be used to sign tokens when serving real traffic.
+_DEFAULT_JWT_SECRET = "change-me-to-a-64-char-random-string"
 
 
 class Settings(BaseSettings):
@@ -45,7 +49,9 @@ class Settings(BaseSettings):
 
     # --- Authentication ----------------------------------------------------
     auth_provider: AuthProviderName = "jwt"
-    jwt_secret: str = "change-me-to-a-64-char-random-string"
+    # The default is intentionally obvious and must be overridden before any
+    # real deployment - see the production guard below.
+    jwt_secret: str = _DEFAULT_JWT_SECRET
     jwt_algorithm: str = "HS256"
     jwt_issuer: str = "aarogyadrishti-api"
     access_token_expire_minutes: int = 60
@@ -59,6 +65,16 @@ class Settings(BaseSettings):
 
     # --- CORS --------------------------------------------------------------
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:8080"])
+
+    # --- Rate limiting ------------------------------------------------------
+    # Disabled by default so local dev and the test suite are unaffected.
+    # Production deployments SHOULD enable it (and normally run a second layer
+    # at the gateway/reverse-proxy). Limits are per-IP and in-memory - a single
+    # process. Behind a proxy set TRUSTED_PROXY_COUNT accordingly.
+    rate_limit_enabled: bool = False
+    rate_limit_general_per_minute: int = 120
+    rate_limit_auth_per_minute: int = 10
+    rate_limit_trusted_proxy_count: int = 0
 
     # --- Baseline (Phase 1) ------------------------------------------------
     baseline_target_days: int = 7
@@ -77,7 +93,7 @@ class Settings(BaseSettings):
     evidence_repeat_min_experiments: int = 2
 
     # --- Demo data ---------------------------------------------------------
-    allow_demo_data: bool = True
+    allow_demo_data: bool = False
     demo_account_prefix: str = "demo"
 
     # --- AI coach (Phase 6) --------------------------------------------------
@@ -96,6 +112,35 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @model_validator(mode="after")
+    def _production_guards(self) -> "Settings":
+        """Fail fast (at startup, not at request time) on unsafe production config.
+
+        These guards only trigger when ``ENVIRONMENT=production`` so local dev
+        and the test suite are never affected. Prefer crashing loudly over
+        silently serving real health data with a weak secret.
+        """
+        if self.environment != "production":
+            return self
+
+        if self.debug:
+            raise ValueError(
+                "DEBUG must be false in production: the interactive API docs "
+                "(/docs, /redoc, openapi.json) would be exposed."
+            )
+        if self.allow_demo_data:
+            raise ValueError(
+                "ALLOW_DEMO_DATA must be false in production: the demo endpoints "
+                "create accounts with a well-known password and seeded health data."
+            )
+        if len(self.jwt_secret) < 32 or self.jwt_secret == _DEFAULT_JWT_SECRET:
+            raise ValueError(
+                "JWT_SECRET is missing or too weak. Generate one with e.g. "
+                "`python -c \"import secrets; print(secrets.token_urlsafe(64))\"` "
+                "and set it BEFORE starting the API in production."
+            )
+        return self
 
     @property
     def is_production(self) -> bool:

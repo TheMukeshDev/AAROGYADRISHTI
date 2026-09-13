@@ -15,7 +15,9 @@ class Validators {
     final v = value ?? '';
     if (v.isEmpty) return 'Please enter a password.';
     if (v.length < minLength) return 'Use at least $minLength characters.';
-    if (v.isAlphaNumericOnly) return 'Mix letters, numbers or symbols.';
+    if (!v.contains(RegExp(r'[a-zA-Z]')) || !v.contains(RegExp(r'[^a-zA-Z]'))) {
+      return 'Mix letters, numbers or symbols.';
+    }
     return null;
   }
 
@@ -36,8 +38,4 @@ class Validators {
     if (value < min || value > max) return 'Choose between $min and $max.';
     return null;
   }
-}
-
-extension _AlphaNumeric on String {
-  bool get isAlphaNumericOnly => startsWith(RegExp(r'[a-zA-Z0-9]'));
 }

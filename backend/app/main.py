@@ -12,7 +12,8 @@ from app.api import auth, coach, consent, daily_logs, dashboard, experiments, he
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
-from app.core.middleware import RequestContextMiddleware
+from app.core.middleware import RequestContextMiddleware, SecurityHeadersMiddleware
+from app.core.rate_limit import RateLimitMiddleware
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -49,7 +50,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# --- CORS -------------------------------------------------------------------
+# --- Middleware ---------------------------------------------------------------
+# Order matters. add_middleware wraps the previous stack, so the LAST middleware
+# added is the OUTERMOST. Request flow (outermost -> innermost):
+#   SecurityHeaders -> CORS -> RateLimit -> RequestContext -> GZip
+# Security headers are outermost so even rate-limited/error responses get them;
+# CORS sits in front of the rate limiter so browser preflights are not blocked.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+app.add_middleware(RequestContextMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -57,8 +66,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(GZipMiddleware, minimum_size=1024)
-app.add_middleware(RequestContextMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # --- Routers ----------------------------------------------------------------
 for router in (

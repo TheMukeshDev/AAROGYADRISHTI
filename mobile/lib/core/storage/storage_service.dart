@@ -12,9 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class StorageService {
   StorageService._();
 
-  static const _secure = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  static const _secure = FlutterSecureStorage();
   static final StorageService instance = StorageService._();
 
   SharedPreferences? _prefs;

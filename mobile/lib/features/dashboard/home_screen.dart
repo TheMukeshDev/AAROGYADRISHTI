@@ -7,7 +7,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/date_utils.dart';
 import '../../models/health_data.dart';
@@ -99,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             sliver: SliverToBoxAdapter(
               child: Text(
-                "$_greeting \ud83d\udc4b",
+                '$_greeting \ud83d\udc4b',
                 style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
               ),
             ),
@@ -154,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 childAspectRatio: 1.55,
                 children: [
                   MetricCard(title: 'Sleep', value: s?.sleepHours?.toStringAsFixed(1) ?? '\u2014', unit: 'h', icon: Icons.nightlight_round, isEmpty: s?.sleepHours == null),
-                  MetricCard(title: 'Steps', value: s?.steps != null ? '${s!.steps!.toString()}' : '\u2014', icon: Icons.directions_walk, isEmpty: s?.steps == null),
+                  MetricCard(title: 'Steps', value: s?.steps != null ? '${s!.steps}' : '\u2014', icon: Icons.directions_walk, isEmpty: s?.steps == null),
                   MetricCard(title: 'Activity', value: s?.activeMinutes?.toString() ?? '\u2014', unit: 'min', icon: Icons.timer, isEmpty: s?.activeMinutes == null),
                   MetricCard(title: 'Energy', value: s?.energy?.toString() ?? '\u2014', unit: '/10', icon: Icons.bolt, isEmpty: s?.energy == null),
                   MetricCard(title: 'Stress', value: s?.stress?.toString() ?? '\u2014', unit: '/5', icon: Icons.psychology, isEmpty: s?.stress == null),

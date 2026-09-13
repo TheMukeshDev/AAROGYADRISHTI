@@ -2,8 +2,8 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/features/onboarding/onboarding_controller.dart';
-import 'package:mobile/models/app_enums.dart';
+import 'package:aarogyadrishti/features/onboarding/onboarding_controller.dart';
+import 'package:aarogyadrishti/models/app_enums.dart';
 
 void main() {
   group('steps', () {

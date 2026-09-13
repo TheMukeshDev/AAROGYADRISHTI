@@ -4,7 +4,6 @@ library;
 import 'package:flutter/foundation.dart';
 
 import '../../models/app_enums.dart';
-import '../../models/health_data.dart';
 
 class OnboardingController extends ChangeNotifier {
   int _step = 0;

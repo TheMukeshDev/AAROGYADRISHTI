@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database.base import Base  # noqa: E402
 from app.database.session import engine  # noqa: E402
+from app import models  # noqa: E402,F401  ensure all tables are registered
 
 
 def main() -> None:

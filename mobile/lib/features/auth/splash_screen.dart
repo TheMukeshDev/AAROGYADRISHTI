@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 650));
     if (!mounted) return;
     _goTo(const RootGate());
   }
@@ -56,13 +56,17 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.84, end: 1),
+              duration: const Duration(milliseconds: 550),
+              curve: Curves.easeOutBack,
+              builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+              child: Image.asset(
+                'assets/images/AarogyaDrishti.png',
+                width: 180,
+                height: 180,
+                fit: BoxFit.contain,
               ),
-              child: Icon(Icons.health_and_safety, size: 56, color: Colors.white),
             ),
             const SizedBox(height: 28),
             Text(

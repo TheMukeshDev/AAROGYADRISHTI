@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/primary_button.dart';
-import '../../app.dart';
 import '../auth/welcome_screen.dart';
 
 class ProfileSettingsScreen extends StatelessWidget {

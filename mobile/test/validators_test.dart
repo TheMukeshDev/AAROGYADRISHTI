@@ -2,7 +2,7 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/core/utils/validators.dart';
+import 'package:aarogyadrishti/core/utils/validators.dart';
 
 void main() {
   group('Validators.email', () {

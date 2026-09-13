@@ -38,7 +38,7 @@ class HealthConnectService {
   static const Map<HealthDataType, String> categoryTitles = {
     HealthDataType.STEPS: 'Steps',
     HealthDataType.SLEEP_ASLEEP: 'Sleep',
-    HealthDataType.MOVE_MINUTES: 'Activity',
+    HealthDataType.ACTIVITY_INTENSITY: 'Activity',
   };
 
   /// Detects platform + Health Connect availability. Requests nothing.
@@ -47,14 +47,13 @@ class HealthConnectService {
       await _health.configure();
       _configured = true;
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        final supported = await _health.isHealthConnectSupported();
-        if (!supported) {
-          _availability = HealthConnectAvailability.unsupported;
-        } else {
-          final installed = await _health.isHealthConnectInstalled();
-          _availability =
-              installed ? HealthConnectAvailability.supported : HealthConnectAvailability.notInstalled;
-        }
+        final status = await _health.getHealthConnectSdkStatus();
+        _availability = switch (status) {
+          HealthConnectSdkStatus.sdkAvailable => HealthConnectAvailability.supported,
+          HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired =>
+            HealthConnectAvailability.unsupported,
+          _ => HealthConnectAvailability.notInstalled,
+        };
         return _availability!;
       }
       _availability = HealthConnectAvailability.unsupported;
@@ -80,9 +79,7 @@ class HealthConnectService {
     try {
       if (!_configured) await _health.configure();
       final result = await _health.hasPermissions(types);
-      if (result is bool) return result;
-      if (result is Set) return result.length == types.length;
-      return false;
+      return result ?? false;
     } catch (_) {
       return false;
     }
@@ -96,7 +93,7 @@ class HealthConnectService {
 
   /// Read active/exercise minutes between [start] and [end].
   Future<int> readActiveMinutes(DateTime start, DateTime end) async {
-    final data = await _syncRead(HealthDataType.MOVE_MINUTES, start, end);
+    final data = await _syncRead(HealthDataType.ACTIVITY_INTENSITY, start, end);
     return data.fold<int>(0, (sum, d) => sum + (d.value as num).round());
   }
 
@@ -108,7 +105,7 @@ class HealthConnectService {
 
   Future<List<HealthDataPoint>> _syncRead(HealthDataType type, DateTime start, DateTime end) async {
     if (!_configured) await _health.configure();
-    return _health.getHealthDataFromTypes(start, end, [type]);
+    return _health.getHealthDataFromTypes(types: [type], startTime: start, endTime: end);
   }
 
   /// Convenience: read all tracked metrics for a single day.

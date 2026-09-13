@@ -126,6 +126,19 @@ def test_refresh_token_flow(client):
         json={"name": "R", "email": "refresh@example.com", "password": "H3althy!Life"},
     )
     refresh = reg.json()["refresh_token"]
-    resp = client.post("/api/v1/auth/refresh", params={"refresh_token": refresh})
+    # The refresh token travels in the JSON body - never in the URL query.
+    resp = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
     assert resp.status_code == 200
     assert resp.json()["access_token"]
+    assert resp.json()["refresh_token"] != refresh  # rotation
+
+
+def test_refresh_token_rejected_in_query_string(client):
+    reg = client.post(
+        "/api/v1/auth/register",
+        json={"name": "R", "email": "q@example.com", "password": "H3althy!Life"},
+    )
+    refresh = reg.json()["refresh_token"]
+    # Passing the token as a query parameter is no longer supported.
+    resp = client.post("/api/v1/auth/refresh", params={"refresh_token": refresh})
+    assert resp.status_code == 422

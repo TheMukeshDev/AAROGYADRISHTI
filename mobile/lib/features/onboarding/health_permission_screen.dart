@@ -50,10 +50,11 @@ class _HealthPermissionScreenState extends State<HealthPermissionScreen> {
       final types = [
         HealthDataType.STEPS,
         HealthDataType.SLEEP_ASLEEP,
-        HealthDataType.MOVE_MINUTES,
+        HealthDataType.ACTIVITY_INTENSITY,
       ];
       final granted = await _service.requestPermissions(types);
       if (!granted) {
+        if (!mounted) return;
         setState(() {
           _status = AppStrings.permissionDenied;
           _requesting = false;
@@ -61,6 +62,7 @@ class _HealthPermissionScreenState extends State<HealthPermissionScreen> {
         return;
       }
       // Tell the server which categories were consented to.
+      if (!mounted) return;
       final healthRepo = context.read<OnboardingController>();
       healthRepo.setHealthSelection([
         const HealthDataTypeWrapper(

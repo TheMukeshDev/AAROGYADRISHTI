@@ -29,7 +29,6 @@ class _ExperimentDetailScreenState extends State<ExperimentDetailScreen> {
 
   ExperimentDetail? _detail;
   ExperimentResult? _result;
-  ExperimentEvidence? _evidence;
   LearningCandidate? _candidate;
 
   bool _loading = true;
@@ -61,7 +60,6 @@ class _ExperimentDetailScreenState extends State<ExperimentDetailScreen> {
     try {
       final detail = await _repo.detail(widget.experimentId);
       ExperimentResult? result;
-      ExperimentEvidence? evidence;
       LearningCandidate? candidate;
       if (detail.experiment.status != 'running') {
         final results = await Future.wait([
@@ -70,14 +68,12 @@ class _ExperimentDetailScreenState extends State<ExperimentDetailScreen> {
           _repo.learningCandidateFor(widget.experimentId),
         ]);
         result = results[0] as ExperimentResult;
-        evidence = results[1] as ExperimentEvidence?;
         candidate = results[2] as LearningCandidate?;
       }
       if (!mounted) return;
       setState(() {
         _detail = detail;
         _result = result;
-        _evidence = evidence;
         _candidate = candidate;
       });
     } on ApiException catch (e) {

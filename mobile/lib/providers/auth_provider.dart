@@ -25,8 +25,6 @@ class AuthProvider extends ChangeNotifier {
 
   AuthStatus _status = AuthStatus.unknown;
   User? _user;
-  String? _accessToken;
-  String? _refreshToken;
   String? _lastError;
 
   AuthStatus get status => _status;
@@ -51,8 +49,6 @@ class AuthProvider extends ChangeNotifier {
 
   Future<Null> _applySession(AuthSession session) async {
     _user = session.user;
-    _accessToken = session.accessToken;
-    _refreshToken = session.refreshToken;
     _status = AuthStatus.authenticated;
     await _storage.saveTokens(access: session.accessToken, refresh: session.refreshToken);
     notifyListeners();
@@ -104,8 +100,6 @@ class AuthProvider extends ChangeNotifier {
     await _storage.clearTokens();
     _repository.clearSession();
     _user = null;
-    _accessToken = null;
-    _refreshToken = null;
     _status = AuthStatus.unauthenticated;
     notifyListeners();
     return null;

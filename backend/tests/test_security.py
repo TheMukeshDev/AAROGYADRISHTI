@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
+from app.core.middleware import SecurityHeadersMiddleware
 from app.core.security import (
     hash_password,
     password_problems,
@@ -50,3 +53,20 @@ def test_password_policy_only_alpha():
 
 def test_password_valid():
     assert password_problems("Str0ng!Pass") == []
+
+
+def test_security_headers_present_on_api_responses():
+    app = FastAPI()
+
+    @app.get("/probe")
+    def probe():
+        return {"ok": True}
+
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    with TestClient(app) as client:
+        resp = client.get("/probe")
+    assert resp.status_code == 200
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"
+    assert resp.headers["X-Frame-Options"] == "DENY"
+    assert resp.headers["Referrer-Policy"] == "no-referrer"

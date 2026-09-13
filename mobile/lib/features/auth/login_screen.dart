@@ -35,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _submitting = true;
@@ -47,8 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const RootGate()),
         (route) => false,
       );
-    } catch (e) {
-      setState(() => _error = context.read<AuthProvider>().lastError);
+    } catch (_) {
+      if (mounted) setState(() => _error = context.read<AuthProvider>().lastError);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -119,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("New here?", style: TextStyle(color: scheme.onSurfaceVariant)),
+                    Text('New here?', style: TextStyle(color: scheme.onSurfaceVariant)),
                     TextButton(
                       onPressed: () => Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (_) => const SignupScreen()),

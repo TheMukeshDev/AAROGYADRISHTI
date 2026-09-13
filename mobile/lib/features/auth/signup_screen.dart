@@ -36,6 +36,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _submitting = true;
@@ -51,7 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
         (route) => false,
       );
     } catch (_) {
-      setState(() => _error = context.read<AuthProvider>().lastError);
+      if (mounted) setState(() => _error = context.read<AuthProvider>().lastError);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

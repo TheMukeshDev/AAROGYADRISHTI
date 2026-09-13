@@ -23,6 +23,33 @@ REQUEST_ID_HEADER = "X-Request-ID"
 UNLOGGED_PATHS = ("/health", "/docs", "/openapi.json")
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Attach hardening response headers.
+
+    These reduce browser-side attack surface (MIME sniffing, click-jacking,
+    referrer leakage). ``Strict-Transport-Security`` is only emitted in
+    production; browsers ignore it on plain ``http://`` responses.
+    """
+
+    _BASE_HEADERS = {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "no-referrer",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    }
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        response = await call_next(request)
+        for header, value in self._BASE_HEADERS.items():
+            response.headers.setdefault(header, value)
+        if request.url.scheme == "https":
+            response.headers.setdefault(
+                "Strict-Transport-Security",
+                "max-age=63072000; includeSubDomains",
+            )
+        return response
+
+
 class RequestContextMiddleware(BaseHTTPMiddleware):
     """Attach a request id, and emit one structured access log line."""
 

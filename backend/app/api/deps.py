@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.errors import AuthenticationError
-from app.core.security import TokenError, decode_token
+from app.core.security import TokenClaims, TokenError, decode_token
 from app.database.session import get_db
 from app.models.user import User
 

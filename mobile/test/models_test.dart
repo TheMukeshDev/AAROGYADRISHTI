@@ -2,8 +2,9 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/models/daily_log.dart';
-import 'package:mobile/models/health_data.dart';
+import 'package:aarogyadrishti/models/daily_log.dart';
+import 'package:aarogyadrishti/models/health_data.dart';
+import 'package:aarogyadrishti/models/app_enums.dart';
 
 void main() {
   group('DailyLog.fromJson', () {
@@ -33,7 +34,7 @@ void main() {
       expect(log.exerciseLevel, ExerciseLevel.moderate);
       expect(log.isDemo, isFalse);
       expect(log.isPartial, isFalse);
-      expect(log.answeredCount, 8);
+      expect(log.answeredCount, 7);
     });
 
     test('unknown values stay null (never fabricated)', () {

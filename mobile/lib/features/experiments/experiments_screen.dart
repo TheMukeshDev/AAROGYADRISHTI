@@ -68,9 +68,11 @@ class _ExperimentsScreenState extends State<ExperimentsScreen> {
     setState(() => _starting = true);
     try {
       await _repo.start(rec.experimentType);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Experiment started. Keep logging daily!')),
-          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Experiment started. Keep logging daily!')),
+        );
+      }
       await _load();
     } on ApiException catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));

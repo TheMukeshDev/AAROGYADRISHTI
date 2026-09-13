@@ -16,7 +16,7 @@ import '../core/network/api_exception.dart';
 import '../core/storage/storage_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/app_scaffold.dart';
-import 'app.dart';
+import '../app.dart';
 import 'auth/welcome_screen.dart';
 import 'onboarding/onboarding_flow.dart';
 

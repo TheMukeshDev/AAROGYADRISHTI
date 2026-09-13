@@ -47,7 +47,9 @@ class GoalScreen extends StatelessWidget {
                 );
               },
             ),
-        ),
+          ),
+        ],
+      ),
     );
   }
 }

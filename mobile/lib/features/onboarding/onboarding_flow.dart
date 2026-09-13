@@ -136,7 +136,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 )
               else
                 PrimaryButton(
-                  label: "Start my journey",
+                  label: 'Start my journey',
                   icon: Icons.arrow_forward,
                   onPressed: _finish,
                 ),

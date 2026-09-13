@@ -24,6 +24,7 @@ class ApiClient {
 
   String? _accessToken;
   String? _refreshToken;
+  static const _requestTimeout = Duration(seconds: 15);
 
   void setTokens({String? access, String? refresh}) {
     _accessToken = access;
@@ -74,11 +75,11 @@ class ApiClient {
   Future<dynamic> _send(Future<http.Response> Function() request) async {
     http.Response response;
     try {
-      response = await request();
+      response = await request().timeout(_requestTimeout);
     } on TimeoutException {
       throw const ApiException(message: 'The request timed out. Please try again.');
     } catch (_) {
-      throw const NetworkException('No internet connection. Please try again.');
+      throw NetworkException('No internet connection. Please try again.');
     }
 
     if (response.statusCode == 401 && _refreshToken != null) {
@@ -86,9 +87,9 @@ class ApiClient {
       final refreshed = await _tryRefresh();
       if (refreshed) {
         try {
-          response = await request();
+          response = await request().timeout(_requestTimeout);
         } catch (_) {
-          throw const NetworkException('No internet connection. Please try again.');
+          throw NetworkException('No internet connection. Please try again.');
         }
       }
     }
@@ -106,9 +107,17 @@ class ApiClient {
     if (_refreshing || _refreshToken == null) return false;
     _refreshing = true;
     try {
-      final uri = Uri.parse('$baseUrl/api/v1/auth/refresh')
-          .replace(queryParameters: {'refresh_token': _refreshToken!});
-      final res = await _http.get(uri, headers: _headers());
+      final uri = Uri.parse('$baseUrl/api/v1/auth/refresh');
+      // The refresh token travels in the JSON body, never in the URL query -
+      // URLs leak into logs and history, and a refresh token renews the whole
+      // session.
+      final res = await _http
+          .post(
+            uri,
+            headers: _headers(),
+            body: jsonEncode({'refresh_token': _refreshToken}),
+          )
+          .timeout(_requestTimeout);
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body) as JsonMap;
         setTokens(access: body['access_token'] as String?, refresh: body['refresh_token'] as String?);

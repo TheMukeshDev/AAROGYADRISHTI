@@ -34,6 +34,16 @@ class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
 
+class RefreshTokenRequest(BaseModel):
+    """Refresh tokens travel in the request body, never in the URL.
+
+    Query parameters leak into access logs, proxy logs and browser history;
+    a refresh token grants full session renewal, so it must stay out of them.
+    """
+
+    refresh_token: str = Field(min_length=1, max_length=4096)
+
+
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str = Field(min_length=_PASSWORD_MIN, max_length=128)

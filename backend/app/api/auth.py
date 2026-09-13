@@ -9,6 +9,7 @@ from app.core.errors import AuthenticationError
 from app.schemas.auth import (
     ForgotPasswordRequest,
     LoginRequest,
+    RefreshTokenRequest,
     RegisterRequest,
     ResetPasswordRequest,
     TokenResponse,
@@ -47,8 +48,8 @@ def logout_user(db: DbSession, user: CurrentUser):
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh_token(refresh_token: str, db: DbSession):
-    user, access, new_refresh = refresh_access_token(db, refresh_token)
+def refresh_token(payload: RefreshTokenRequest, db: DbSession):
+    user, access, new_refresh = refresh_access_token(db, payload.refresh_token)
     return TokenResponse(access_token=access, refresh_token=new_refresh, user=UserResponse.model_validate(user))
 
 
