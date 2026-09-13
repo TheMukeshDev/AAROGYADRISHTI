@@ -7,10 +7,10 @@ Nothing in this project may hardcode secrets - import `get_settings()` instead.
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 AuthProviderName = Literal["jwt", "firebase"]
 
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     firebase_token_uri: str = "https://oauth2.googleapis.com/token"
 
     # --- CORS --------------------------------------------------------------
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:8080"])
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["http://localhost:8080"])
 
     # --- Rate limiting ------------------------------------------------------
     # Disabled by default so local dev and the test suite are unaffected.

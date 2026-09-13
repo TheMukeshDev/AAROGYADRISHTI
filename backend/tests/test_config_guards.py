@@ -57,3 +57,12 @@ def test_non_production_envs_are_not_guarded():
     )
     assert settings.debug is True
     assert settings.is_production is False
+
+
+def test_cors_origins_accepts_vercel_comma_separated_environment_value():
+    settings = Settings(
+        cors_origins="https://app.example, https://admin.example",
+        jwt_secret="whatever",
+    )
+
+    assert settings.cors_origins == ["https://app.example", "https://admin.example"]
