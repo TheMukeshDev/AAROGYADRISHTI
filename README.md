@@ -84,6 +84,25 @@ flutter build apk --release --dart-define=API_BASE_URL=https://api.example.com
 
 Production Android builds must use HTTPS and a release keystore.
 
+## Production release build
+
+Run the backend tests before building the production Android App Bundle:
+
+```powershell
+cd backend
+pytest -q -p no:cacheprovider
+
+cd ..\mobile
+flutter pub get
+flutter build appbundle --release `
+  --dart-define=API_BASE_URL=https://aarogyadrishti.vercel.app `
+  --dart-define=ENVIRONMENT=production
+```
+
+The signed App Bundle is created at
+`mobile/build/app/outputs/bundle/release/app-release.aab`. Configure the
+release keystore in `mobile/android/key.properties` before distributing it.
+
 ## Deploy the backend to Vercel
 
 The Vercel deployment files are already included:
