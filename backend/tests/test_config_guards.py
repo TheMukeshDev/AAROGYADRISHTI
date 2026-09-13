@@ -66,3 +66,12 @@ def test_cors_origins_accepts_vercel_comma_separated_environment_value():
     )
 
     assert settings.cors_origins == ["https://app.example", "https://admin.example"]
+
+
+def test_generic_postgres_url_uses_installed_psycopg3_driver():
+    settings = Settings(
+        database_url="postgresql://user:password@example.com:5432/app",
+        jwt_secret="whatever",
+    )
+
+    assert settings.database_url == "postgresql+psycopg://user:password@example.com:5432/app"

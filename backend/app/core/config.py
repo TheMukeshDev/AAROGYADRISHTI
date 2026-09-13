@@ -116,6 +116,17 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _use_psycopg3_driver(cls, value: object) -> object:
+        """Use the installed psycopg 3 driver for generic PostgreSQL URLs."""
+        if isinstance(value, str):
+            if value.startswith("postgresql://"):
+                return value.replace("postgresql://", "postgresql+psycopg://", 1)
+            if value.startswith("postgres://"):
+                return value.replace("postgres://", "postgresql+psycopg://", 1)
+        return value
+
     @model_validator(mode="after")
     def _production_guards(self) -> "Settings":
         """Fail fast (at startup, not at request time) on unsafe production config.
