@@ -59,9 +59,12 @@ class Settings(BaseSettings):
     password_reset_expire_minutes: int = 30
     password_min_length: int = 8
 
-    # Firebase (only used when auth_provider == "firebase")
+    # Firebase (used by the Google sign-in token exchange)
     firebase_project_id: str = ""
     firebase_credentials_path: str = ""
+    firebase_client_email: str = ""
+    firebase_private_key: str = ""
+    firebase_token_uri: str = "https://oauth2.googleapis.com/token"
 
     # --- CORS --------------------------------------------------------------
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:8080"])
@@ -139,6 +142,16 @@ class Settings(BaseSettings):
                 "JWT_SECRET is missing or too weak. Generate one with e.g. "
                 "`python -c \"import secrets; print(secrets.token_urlsafe(64))\"` "
                 "and set it BEFORE starting the API in production."
+            )
+        if self.auth_provider == "firebase" and not self.firebase_project_id:
+            raise ValueError("FIREBASE_PROJECT_ID is required when AUTH_PROVIDER=firebase.")
+        if self.auth_provider == "firebase" and not (
+            self.firebase_credentials_path
+            or (self.firebase_client_email and self.firebase_private_key)
+        ):
+            raise ValueError(
+                "Set Firebase service-account fields on Vercel or "
+                "FIREBASE_CREDENTIALS_PATH when AUTH_PROVIDER=firebase."
             )
         return self
 

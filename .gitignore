@@ -4,6 +4,8 @@
 !.env.example
 *.pem
 service-account*.json
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
 
 # ---------- Python / backend ----------
 __pycache__/

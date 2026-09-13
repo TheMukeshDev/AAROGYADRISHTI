@@ -8,6 +8,7 @@ from app.api.deps import CurrentUser, DbSession
 from app.core.errors import AuthenticationError
 from app.schemas.auth import (
     ForgotPasswordRequest,
+    FirebaseAuthRequest,
     LoginRequest,
     RefreshTokenRequest,
     RegisterRequest,
@@ -18,6 +19,7 @@ from app.schemas.auth import (
 from app.schemas.common import Message
 from app.services.auth import (
     authenticate,
+    authenticate_firebase,
     logout,
     refresh_access_token,
     register,
@@ -76,4 +78,10 @@ def demo_account(db: DbSession):
         raise AuthenticationError("Demo access is disabled.")
     user, _, _ = seed_demo_user(db)
     _, access, refresh = authenticate(db, user.email, "demo12345")
+    return TokenResponse(access_token=access, refresh_token=refresh, user=UserResponse.model_validate(user))
+
+
+@router.post("/firebase", response_model=TokenResponse)
+def firebase_login(payload: FirebaseAuthRequest, db: DbSession):
+    user, access, refresh = authenticate_firebase(db, payload.id_token)
     return TokenResponse(access_token=access, refresh_token=refresh, user=UserResponse.model_validate(user))

@@ -24,6 +24,7 @@ from app.models.daily_log import DailyLog
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.auth import RegisterRequest
+from app.services.firebase_auth import verify_id_token
 
 users = UserRepository()
 
@@ -60,6 +61,37 @@ def authenticate(db: Session, email: str, password: str) -> tuple[User, str, str
         raise AuthenticationError("Incorrect email or password.")
     access, _ = create_access_token(user.id, user.token_version, _settings())
     refresh, _ = create_refresh_token(user.id, user.token_version, _settings())
+    return user, access, refresh
+
+
+def authenticate_firebase(db: Session, id_token: str) -> tuple[User, str, str]:
+    """Verify a Firebase ID token, provision the user, and issue app tokens."""
+    settings = _settings()
+    if settings.auth_provider != "firebase":
+        raise AuthenticationError("Firebase sign-in is disabled.")
+    claims = verify_id_token(id_token, settings)
+    email = str(claims["email"]).lower().strip()
+    name = str(claims.get("name") or email.split("@", 1)[0]).strip()
+    user = users.get_by_email(db, email)
+
+    if user is None:
+        user = User(
+            email=email,
+            name=name[:120],
+            password_hash=None,
+            auth_provider="firebase",
+            email_verified=True,
+        )
+        db.add(user)
+    else:
+        user.email_verified = True
+        if not user.name:
+            user.name = name[:120]
+
+    db.commit()
+    db.refresh(user)
+    access, _ = create_access_token(user.id, user.token_version, settings)
+    refresh, _ = create_refresh_token(user.id, user.token_version, settings)
     return user, access, refresh
 
 

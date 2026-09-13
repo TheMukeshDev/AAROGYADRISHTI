@@ -58,6 +58,26 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  Future<void> _submitGoogle() async {
+    if (_submitting) return;
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+    try {
+      await context.read<AuthProvider>().loginWithGoogle();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const RootGate()),
+        (route) => false,
+      );
+    } catch (_) {
+      if (mounted) setState(() => _error = context.read<AuthProvider>().lastError);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -117,6 +137,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   icon: Icons.arrow_forward,
                   loading: _submitting,
                   onPressed: _submit,
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.account_circle_outlined),
+                  label: const Text('Continue with Google'),
+                  onPressed: _submitting ? null : _submitGoogle,
                 ),
                 const SizedBox(height: 16),
                 Row(

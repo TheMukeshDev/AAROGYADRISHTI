@@ -28,6 +28,14 @@ class AuthRepository {
     return _apply(_parseSession(data));
   }
 
+  Future<AuthSession> loginWithFirebase(String idToken) async {
+    final data = await _api.post(
+      '${AppConstants.apiV1Prefix}/auth/firebase',
+      body: {'id_token': idToken},
+    );
+    return _apply(_parseSession(data));
+  }
+
   Future<void> logout() async => _api.post('${AppConstants.apiV1Prefix}/auth/logout');
 
   Future<void> forgotPassword(String email) async {

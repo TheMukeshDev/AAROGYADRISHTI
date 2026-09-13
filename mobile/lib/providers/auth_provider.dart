@@ -7,6 +7,8 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../core/network/api_exception.dart';
 import '../core/storage/storage_service.dart';
@@ -22,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
 
   final AuthRepository _repository;
   final StorageService _storage;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   AuthStatus _status = AuthStatus.unknown;
   User? _user;
@@ -79,6 +82,31 @@ class AuthProvider extends ChangeNotifier {
     return null;
   }
 
+  Future<Null> loginWithGoogle() async {
+    _lastError = null;
+    try {
+      final googleAccount = await _googleSignIn.signIn();
+      if (googleAccount == null) return null;
+      final googleAuthentication = await googleAccount.authentication;
+      final credential = firebase_auth.GoogleAuthProvider.credential(
+        accessToken: googleAuthentication.accessToken,
+        idToken: googleAuthentication.idToken,
+      );
+      final credentialResult = await firebase_auth.FirebaseAuth.instance.signInWithCredential(credential);
+      final firebaseUser = credentialResult.user;
+      final firebaseIdToken = await firebaseUser?.getIdToken();
+      if (firebaseIdToken == null || firebaseIdToken.isEmpty) {
+        throw StateError('Firebase did not return an ID token.');
+      }
+      final session = await _repository.loginWithFirebase(firebaseIdToken);
+      await _applySession(session);
+    } catch (e) {
+      _lastError = _friendly(e);
+      rethrow;
+    }
+    return null;
+  }
+
   Future<Null> loginWithDemo() async {
     _lastError = null;
     try {
@@ -98,6 +126,8 @@ class AuthProvider extends ChangeNotifier {
       // Server logout is best-effort; local logout always succeeds.
     }
     await _storage.clearTokens();
+    await firebase_auth.FirebaseAuth.instance.signOut();
+    await _googleSignIn.signOut();
     _repository.clearSession();
     _user = null;
     _status = AuthStatus.unauthenticated;

@@ -27,6 +27,29 @@ def test_register_and_login(client):
     assert login.json()["access_token"]
 
 
+def test_firebase_login_provisions_user(client, monkeypatch):
+    from app.core.config import get_settings
+    from app.services import auth as auth_service
+
+    settings = get_settings()
+    monkeypatch.setattr(settings, "auth_provider", "firebase")
+    monkeypatch.setattr(
+        auth_service,
+        "verify_id_token",
+        lambda token, configured_settings: {
+            "email": "google@example.com",
+            "email_verified": True,
+            "name": "Google User",
+            "aud": configured_settings.firebase_project_id,
+        },
+    )
+
+    response = client.post("/api/v1/auth/firebase", json={"id_token": "firebase-id-token"})
+    assert response.status_code == 200, response.text
+    assert response.json()["user"]["email"] == "google@example.com"
+    assert response.json()["user"]["email_verified"] is True
+
+
 def test_register_duplicate_email(client):
     payload = {"name": "A", "email": "dup@example.com", "password": "H3althy!Life"}
     assert client.post("/api/v1/auth/register", json=payload).status_code == 201

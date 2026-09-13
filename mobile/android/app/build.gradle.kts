@@ -6,6 +6,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase's google-services.json is downloaded from the Firebase console
+// and is intentionally not committed to the repository.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // Load release signing credentials from android/key.properties (git-ignored).
 // If the file is absent we keep the project runnable by falling back to the
 // debug keystore, but that must NEVER ship. Create android/key.properties:
