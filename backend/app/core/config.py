@@ -7,10 +7,10 @@ Nothing in this project may hardcode secrets - import `get_settings()` instead.
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 AuthProviderName = Literal["jwt", "firebase"]
 
@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     firebase_token_uri: str = "https://oauth2.googleapis.com/token"
 
     # --- CORS --------------------------------------------------------------
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:8080"])
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["http://localhost:8080"])
 
     # --- Rate limiting ------------------------------------------------------
     # Disabled by default so local dev and the test suite are unaffected.
@@ -114,6 +114,17 @@ class Settings(BaseSettings):
         """Allow ``CORS_ORIGINS`` to be a comma separated string."""
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _use_psycopg3_driver(cls, value: object) -> object:
+        """Use the installed psycopg 3 driver for generic PostgreSQL URLs."""
+        if isinstance(value, str):
+            if value.startswith("postgresql://"):
+                return value.replace("postgresql://", "postgresql+psycopg://", 1)
+            if value.startswith("postgres://"):
+                return value.replace("postgres://", "postgresql+psycopg://", 1)
         return value
 
     @model_validator(mode="after")
