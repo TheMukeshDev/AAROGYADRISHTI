@@ -24,7 +24,7 @@ class AuthProvider extends ChangeNotifier {
 
   final AuthRepository _repository;
   final StorageService _storage;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   AuthStatus _status = AuthStatus.unknown;
   User? _user;
@@ -85,12 +85,10 @@ class AuthProvider extends ChangeNotifier {
   Future<Null> loginWithGoogle() async {
     _lastError = null;
     try {
-      final googleAccount = await _googleSignIn.signIn();
-      if (googleAccount == null) return null;
-      final googleAuthentication = await googleAccount.authentication;
+      final googleAccount = await _googleSignIn.authenticate();
+      final googleIdToken = googleAccount.authentication.idToken;
       final credential = firebase_auth.GoogleAuthProvider.credential(
-        accessToken: googleAuthentication.accessToken,
-        idToken: googleAuthentication.idToken,
+        idToken: googleIdToken,
       );
       final credentialResult = await firebase_auth.FirebaseAuth.instance.signInWithCredential(credential);
       final firebaseUser = credentialResult.user;

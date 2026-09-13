@@ -8,8 +8,8 @@
   Android emulator's alias for the host machine).
 
   Production builds must point API_BASE_URL at an https:// endpoint:
-      flutter build apk --release \
-        --dart-define=API_BASE_URL=https://api.your-domain.in
+            flutter build apk release \
+    dart-define=API_BASE_URL=https://api.your-domain.in
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false">

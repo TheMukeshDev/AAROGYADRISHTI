@@ -4,6 +4,7 @@
 !.env.example
 *.pem
 service-account*.json
+**/google-services.json
 mobile/android/app/google-services.json
 mobile/ios/Runner/GoogleService-Info.plist
 
@@ -27,6 +28,7 @@ mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
 mobile/.packages
 mobile/build/
+mobile/**/build/
 mobile/ios/Pods/
 mobile/android/.gradle/
 mobile/android/local.properties
