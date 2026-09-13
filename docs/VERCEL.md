@@ -34,7 +34,7 @@ Add these in **Project Settings > Environment Variables**. Select **Production**
 ```dotenv
 ENVIRONMENT=production
 DEBUG=false
-DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE
+DATABASE_URL=postgresql+psycopg://<DB_USER>.<PROJECT_REF>:<DB_PASSWORD>@aws-0-<REGION>.pooler.supabase.com:5432/<DB_NAME>
 JWT_SECRET=<generate a unique random value of at least 32 characters>
 ALLOW_DEMO_DATA=false
 CORS_ORIGINS=https://your-web-client.example
@@ -45,6 +45,26 @@ FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-firebase-project-id.iam.gserv
 FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n<private-key-content>\n-----END PRIVATE KEY-----\n
 FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
 ```
+
+### Supabase connection strings
+
+Always use the **pooled (Supavisor)** URL in `DATABASE_URL`. Supabase's direct
+endpoint (`db.<project-ref>.supabase.co:5432`) is **IPv6-only** unless the paid
+IPv4 add-on is enabled, and Vercel Python functions cannot reach it - every
+database route would return `503 service_unavailable`.
+
+The pooled username embeds the project reference as `<DB_USER>.<PROJECT_REF>`
+(e.g. `postgres.<PROJECT_REF>`). Copy the exact values from the Supabase
+dashboard (**Project Settings > Database > Connection string**):
+
+| Mode | Host:Port | IPv4 | Best for |
+| --- | --- | --- | --- |
+| Session pooler (recommended) | `aws-0-<REGION>.pooler.supabase.com:5432` | Yes | Persistent backend (SQLAlchemy pooling) |
+| Transaction pooler | `aws-0-<REGION>.pooler.supabase.com:6543` | Yes | Short-lived serverless connections |
+
+To find the region, look at the pooler hostname shown in the dashboard, or run
+the session-mode example against your region. Never use the IPv6 direct URL on
+Vercel.
 
 Generate a secret locally:
 
@@ -104,7 +124,7 @@ cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-$env:DATABASE_URL = "postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
+$env:DATABASE_URL = "postgresql+psycopg://<DB_USER>.<PROJECT_REF>:<DB_PASSWORD>@aws-0-<REGION>.pooler.supabase.com:5432/<DB_NAME>"
 python -m alembic upgrade head
 ```
 
@@ -113,14 +133,17 @@ value in `.env` or commit it.
 
 ## Verify the deployment
 
-After deployment, test the liveness endpoint:
+After deployment, test the liveness endpoint and the database probe:
 
 ```text
 https://<your-project>.vercel.app/health
+https://<your-project>.vercel.app/health/db
 ```
 
-A healthy response contains `"status":"ok"`. With `DEBUG=false`, `/docs`,
-`/redoc`, and the OpenAPI document are intentionally disabled.
+A healthy response contains `"status":"ok"`. `/health/db` returns `503` (with
+a `service_unavailable` envelope) when PostgreSQL is unreachable. With
+`DEBUG=false`, `/docs`, `/redoc`, and the OpenAPI document are intentionally
+disabled.
 
 For a stable mobile release, add a custom domain in **Project Settings >
 Domains** and use that HTTPS URL as the API base URL:
@@ -158,7 +181,11 @@ from `backend`, so it automatically uses the correct root and `vercel.json`.
 - **Firebase token exchange fails:** verify `FIREBASE_PROJECT_ID` matches the
   Firebase project and that all Firebase service-account fields are present.
 - **Database connection errors:** verify the database is reachable from Vercel
-  and that the URL uses the `postgresql+psycopg://` SQLAlchemy scheme.
+  and that the URL uses the `postgresql+psycopg://` SQLAlchemy scheme with the
+  **pooled (Supavisor)** host. The direct `db.<project-ref>.supabase.co`
+  endpoint is IPv6-only and cannot be reached from Vercel; every database route
+  then returns a `503 service_unavailable` envelope. Check `/health/db` and
+  Vercel function logs for the exception type (never the connection string).
 - **CORS errors in a browser:** add the exact browser origin to `CORS_ORIGINS`,
   then redeploy. Native Flutter requests are not subject to browser CORS.
 - **Slow or unreliable requests:** Vercel functions are request-based and the

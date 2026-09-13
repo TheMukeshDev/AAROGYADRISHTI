@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from typing import Annotated
 
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from sqlalchemy.orm import Session
 
 from app.api import auth, coach, consent, daily_logs, dashboard, experiments, health, learning, profile
 from app.core.config import get_settings
-from app.core.errors import register_exception_handlers
+from app.core.errors import ServiceUnavailableError, register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware, SecurityHeadersMiddleware
 from app.core.rate_limit import RateLimitMiddleware
+from app.database.session import db_is_reachable, get_db
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -84,8 +87,35 @@ for router in (
 
 register_exception_handlers(app)
 
+api_health_router = APIRouter(tags=["health"])
+
+
+@api_health_router.get("/health", include_in_schema=False)
+def api_healthcheck() -> dict:
+    """Liveness probe alias under the API prefix."""
+    return {"status": "ok", "app": settings.app_name, "phase": "1-6"}
+
+
+@api_health_router.get("/health/db", include_in_schema=False)
+def api_db_healthcheck(db: Annotated[Session, Depends(get_db)]) -> dict:
+    """Database liveness probe alias under the API prefix."""
+    if not db_is_reachable(db):
+        raise ServiceUnavailableError("The database is not reachable.")
+    return {"status": "ok"}
+
+
+app.include_router(api_health_router, prefix=settings.api_v1_prefix)
+
 
 @app.get("/health", tags=["health"])
 def healthcheck() -> dict:
     """Liveness probe - does not touch the database."""
     return {"status": "ok", "app": settings.app_name, "phase": "1-6"}
+
+
+@app.get("/health/db", tags=["health"])
+def db_healthcheck(db: Annotated[Session, Depends(get_db)]) -> dict:
+    """Database liveness probe - returns 503 without driver details on failure."""
+    if not db_is_reachable(db):
+        raise ServiceUnavailableError("The database is not reachable.")
+    return {"status": "ok"}

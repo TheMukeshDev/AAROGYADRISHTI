@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # --- CORS --------------------------------------------------------------
     cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["http://localhost:8080"])
 
+    # --- Supabase (optional) -----------------------------------------------
+    # Used only if a Supabase REST/Auth client is ever wired in. The API reads
+    # and writes through SQLAlchemy + PostgreSQL via DATABASE_URL, never REST.
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+
     # --- Rate limiting ------------------------------------------------------
     # Disabled by default so local dev and the test suite are unaffected.
     # Production deployments SHOULD enable it (and normally run a second layer
