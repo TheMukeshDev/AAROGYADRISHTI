@@ -2,14 +2,9 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-}
-
-// Firebase's google-services.json is downloaded from the Firebase console
-// and is intentionally not committed to the repository.
-if (file("google-services.json").exists()) {
-    apply(plugin = "com.google.gms.google-services")
 }
 
 // Load release signing credentials from android/key.properties (git-ignored).
@@ -78,6 +73,12 @@ android {
             isShrinkResources = false
         }
     }
+}
+
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
 }
 
 kotlin {
