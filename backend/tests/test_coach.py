@@ -187,6 +187,60 @@ def test_deterministic_provider_unit():
     assert "0.40" in reply  # only real correlation, no invented ones
 
 
+def test_gemini_provider_maps_messages_and_sanitizes(monkeypatch):
+    import httpx
+
+    from app.ai.base_provider import CoachContext
+    from app.ai.gemini_provider import GeminiProvider
+
+    captured = {}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": "Your pattern looks useful."}]}}]}
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            captured["timeout"] = kwargs["timeout"]
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, url, headers, json):
+            captured.update(url=url, headers=headers, payload=json)
+            return FakeResponse()
+
+    monkeypatch.setattr(httpx, "Client", FakeClient)
+    provider = GeminiProvider(api_key="test-key", model="gemini-test")
+    result = provider.generate(
+        [{"role": "system", "content": "Stay within scope."}, {"role": "user", "content": "How am I doing?"}],
+        CoachContext(has_daily_data=True),
+    )
+
+    assert result.startswith("Your pattern")
+    assert captured["url"].endswith("/models/gemini-test:generateContent")
+    assert captured["headers"]["x-goog-api-key"] == "test-key"
+    assert captured["payload"]["contents"] == [{"role": "user", "parts": [{"text": "How am I doing?"}]}]
+    assert captured["payload"]["systemInstruction"] == {"parts": [{"text": "Stay within scope."}]}
+
+
+def test_gemini_provider_uses_environment_model(monkeypatch):
+    from app.ai.gemini_provider import GeminiProvider
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    monkeypatch.setattr(settings, "ai_model", "gemini-model-from-env")
+    provider = GeminiProvider(api_key="test-key")
+
+    assert provider.model == "gemini-model-from-env"
+
+
 def test_send_message_persists_and_returns_reply(client, auth_headers):
     headers = auth_headers("coach-persist@example.com")
     conv = _new_conversation(client, headers)

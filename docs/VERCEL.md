@@ -52,18 +52,23 @@ Generate a secret locally:
 python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-Also configure these only when needed:
+For Gemini, configure:
 
 ```dotenv
-AI_PROVIDER=deterministic
-AI_API_KEY=
-AI_BASE_URL=
-AI_MODEL=gpt-4o-mini
+AI_PROVIDER=gemini
+AI_API_KEY=<Google AI Studio Gemini API key>
+AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+AI_MODEL=<the exact Gemini model ID to use>
 ```
 
-Set `AI_PROVIDER=openai_compatible` and provide the three AI values only when
-a remote AI coach provider is intentionally enabled. Never commit secrets or
-put them in `vercel.json`.
+`AI_MODEL` is read directly from the environment for every Gemini provider
+instance. For example, set `AI_MODEL=gemini-3.5-flash` or another model ID
+available to your Google AI Studio key. The application does not silently
+replace a missing model with a hardcoded model.
+
+Leave `AI_PROVIDER=deterministic` for the offline provider, or use
+`AI_PROVIDER=openai_compatible` for another compatible endpoint. Never commit
+AI keys or put them in `vercel.json`.
 
 `CORS_ORIGINS` is a comma-separated list. Use the actual origin of any browser
 client; a Flutter Android app does not require CORS. Do not use `*` with the

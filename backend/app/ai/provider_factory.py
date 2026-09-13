@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from app.ai.base_provider import CoachProvider
 from app.ai.deterministic_provider import DeterministicCoachProvider
+from app.ai.gemini_provider import GeminiProvider
 from app.ai.openai_compatible_provider import OpenAICompatibleProvider
 from app.core.config import get_settings
 
@@ -17,6 +18,12 @@ def get_coach_provider(hint: str | None = None) -> CoachProvider:
     """Return the active provider; never raises for configuration issues."""
     settings = get_settings()
     chosen = (hint or settings.ai_provider or "deterministic").lower()
+    if chosen == "gemini" and settings.ai_api_key and settings.ai_model:
+        return GeminiProvider(
+            api_key=settings.ai_api_key,
+            base_url=settings.ai_base_url,
+            model=settings.ai_model,
+        )
     if chosen in ("openai", "openai_compatible") and settings.ai_api_key:
         return OpenAICompatibleProvider(
             api_key=settings.ai_api_key,

@@ -59,6 +59,10 @@ full service-account JSON blob.
 ## Safe extension points
 
 - Add providers behind the existing AI provider factory.
+- Gemini uses the native `generateContent` REST shape through
+  `GeminiProvider`; it does not require a second SDK dependency.
+- Gemini model selection is environment-driven through `AI_MODEL`; changing
+  the Vercel variable and redeploying changes the model without a code edit.
 - Add analytics as deterministic functions over validated user data.
 - Add API behavior through a schema, router, service, repository/model change,
   and focused test.

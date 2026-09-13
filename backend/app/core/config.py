@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     demo_account_prefix: str = "demo"
 
     # --- AI coach (Phase 6) --------------------------------------------------
-    # provider: "deterministic" (offline default) | "openai" | "openai_compatible"
+    # provider: "deterministic" | "gemini" | "openai_compatible"
     ai_provider: str = "deterministic"
     ai_api_key: str = ""
     ai_base_url: str = ""            # e.g. https://api.openai.com/v1
