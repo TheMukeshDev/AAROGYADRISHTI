@@ -16,7 +16,6 @@ firebase-admin>=6.5,<8.0
 pandas>=2.2
 numpy>=1.26
 scipy>=1.12
-xgboost>=2.0                 # optional: personal wellbeing model (falls back to sklearn-free path)
 # scikit-learn and shap are OPTIONAL and only used inside guarded imports
 # (the App Control policy on this machine blocks their DLLs at import time).
 
